@@ -3,24 +3,25 @@
 
 #include <iostream>
 #include <string>
-#include <cstdlib> // Needed for std::system()
+#include <cstdlib>
 
-static void executeCommand(const std::string& command) {
+static bool executeCommand(const std::string& command) {
     if (command.empty()) {
-        return;
+        return true;
     }
 
-    // 1. Mute the default shell error by redirecting stderr (2>) to the system's trash bin
-    // On Mac/Linux: 2> /dev/null
-    // On Windows: 2> nul
+    if (command == "exit") {
+        return false;
+    }
+
+    const int status = std::system(command.c_str());
+
     std::string mutedCommand = command + " 2> /dev/null"; 
 
-    // 2. Run the muted command
     int statusCode = std::system(mutedCommand.c_str());
 
-    // 3. If the status code is non-zero, the command failed
     if (statusCode != 0) {
-        std::cout << "cppsh: Command failed to execute.\n";
+        std::cout << "cppsh: command failed\n";
     }
 }
 
@@ -28,15 +29,17 @@ static void mainShell() {
     std::string dummy;
     do {
         std::cout << "$ " << std::flush; 
-        
-        // Grab the input line
+
         if (std::getline(std::cin, dummy)) {
-            // Send the input to your execute function!
             executeCommand(dummy); 
         } else {
             break; 
         }
     } while (true);
+
+    if (!executeCommand(command)) {
+            break;
+    }
 }
 
 #endif // SHELL_H
