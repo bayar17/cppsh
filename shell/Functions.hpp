@@ -14,32 +14,32 @@ static bool executeCommand(const std::string& command) {
         return false;
     }
 
-    const int status = std::system(command.c_str());
-
     std::string mutedCommand = command + " 2> /dev/null"; 
 
     int statusCode = std::system(mutedCommand.c_str());
 
     if (statusCode != 0) {
         std::cout << "cppsh: command failed\n";
+        return true;
     }
+    return true;
 }
 
 static void mainShell() {
-    std::string dummy;
-    do {
+    std::string command;
+
+    while (true) {
         std::cout << "$ " << std::flush; 
 
-        if (std::getline(std::cin, dummy)) {
-            executeCommand(dummy); 
-        } else {
-            break; 
-        }
-    } while (true);
-
-    if (!executeCommand(command)) {
+        if (std::getline(std::cin, command)) 
+        {
             break;
-    }
+        }
+        if (!executeCommand(command)) 
+        {
+            break;
+        }
+    } 
 }
 
 #endif // SHELL_H
