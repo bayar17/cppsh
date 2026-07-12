@@ -3,7 +3,11 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <sstream>
 #include <cstdlib>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "ColorCoding.hpp"
 
 static bool executeCommand(const std::string& command) {
@@ -17,6 +21,25 @@ static bool executeCommand(const std::string& command) {
 
     if (command == "ls") {
         listDirectory(fs::current_path());
+        return true;
+    }
+
+    if (command.substr(0, 3) == "cd ") {
+        std::string path = command.substr(3);
+        std::error_code ec;
+
+        fs::current_path(path, ec);
+
+        if (ec) {
+            std::cout << "cppsh: cd: " << path << ": " << ec.message() << '\n';
+        }
+        return true;
+    } else if (command == "cd") {
+        const char* home = std::getenv("HOME");
+        if (home) {
+            std::error_code ec;
+            fs::current_path(home, ec);
+        }
         return true;
     }
 
