@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include "ColorCoding.hpp"
 
 static bool executeCommand(const std::string& command) {
     if (command.empty()) {
@@ -12,6 +13,11 @@ static bool executeCommand(const std::string& command) {
 
     if (command == "exit") {
         return false;
+    }
+
+    if (command == "ls") {
+        listDirectory(fs::current_path());
+        return true;
     }
 
     std::string mutedCommand = command + " 2> /dev/null"; 
@@ -31,7 +37,7 @@ static void mainShell() {
     while (true) {
         std::cout << "$ " << std::flush; 
 
-        if (std::getline(std::cin, command)) 
+        if (!std::getline(std::cin, command)) 
         {
             break;
         }
