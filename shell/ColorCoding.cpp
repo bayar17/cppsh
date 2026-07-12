@@ -13,6 +13,12 @@ FileType detectFileType(const std::filesystem::directory_entry& entry)
     if (entry.is_directory(error)) {
         return FileType::Directory;
     }
+
+    std::filesystem::perms p = entry.status(error).permissions();
+    if ((p & std::filesystem::perms::owner_exec) != std::filesystem::perms::none) {
+        return FileType::Executable;
+    }
+    
     return FileType::Unknown;
 }
 
