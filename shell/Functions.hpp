@@ -8,49 +8,72 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "ColorCoding.hpp"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 static bool executeCommand(const std::string& command) {
     if (command.empty()) {
         return true;
     }
 
-    if (command == "exit") {
+    std::vector<std::string> args_str;
+    std::istringstream iss(command);
+    std::string arg;
+    while (iss >> arg) {
+        args_str.push_back(arg);
+    }
+
+    if (args_str.empty()) return true;
+
+    
+    if (args_str[0] == "exit") {
         return false;
     }
 
-    if (command == "ls") {
-        listDirectory(fs::current_path());
-        return true;
-    }
-
-    if (command.substr(0, 3) == "cd ") {
-        std::string path = command.substr(3);
-        std::error_code ec;
-
-        fs::current_path(path, ec);
-
-        if (ec) {
-            std::cout << "cppsh: cd: " << path << ": " << ec.message() << '\n';
-        }
-        return true;
-    } else if (command == "cd") {
-        const char* home = std::getenv("HOME");
-        if (home) {
+    if (args_str[0] == "cd") {
+        if (args_str.size() > 1) {
             std::error_code ec;
-            fs::current_path(home, ec);
+            fs::current_path(args_str[1], ec);
+            if (ec) {
+                std::cout << "cppsh: cd: " << args_str[1] << ": " << ec.message() << '\n';
+            }
+        } else {
+            const char* home = std::getenv("HOME");
+            if (home) {
+                std::error_code ec;
+                fs::current_path(home, ec);
+            }
         }
         return true;
     }
 
-    std::string mutedCommand = command + " 2> /dev/null"; 
-
-    int statusCode = std::system(mutedCommand.c_str());
-
-    if (statusCode != 0) {
-        std::cout << "cppsh: command failed\n";
-        return true;
+    if (args_str[0] == "ls") {
+        args_str.push_back("-G"); 
     }
+
+    std::vector<char*> args_c;
+    for (auto& s : args_str) {
+        args_c.push_back(const_cast<char*>(s.c_str()));
+    }
+    args_c.push_back(nullptr);
+
+    pid_t pid = fork();
+
+    if (pid < 0) {
+        std::cerr << "cppsh: fork failed\n";
+    } 
+    else if (pid == 0) {
+        if (execvp(args_c[0], args_c.data()) == -1) {
+            std::cerr << "cppsh: command not found: " << args_c[0] << '\n';
+        }
+        exit(EXIT_FAILURE); 
+    } 
+    else {
+        int status;
+        waitpid(pid, &status, 0);
+    }
+
     return true;
 }
 
