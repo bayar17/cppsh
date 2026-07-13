@@ -13,10 +13,6 @@
 namespace fs = std::filesystem;
 
 static bool executeCommand(const std::string& command) {
-    if (command.empty()) {
-        return true;
-    }
-
     std::vector<std::string> args_str;
     std::istringstream iss(command);
     std::string arg;
@@ -30,6 +26,7 @@ static bool executeCommand(const std::string& command) {
     if (args_str[0] == "exit") {
         return false;
     }
+
 
     if (args_str[0] == "cd") {
         if (args_str.size() > 1) {
@@ -49,7 +46,7 @@ static bool executeCommand(const std::string& command) {
     }
 
     if (args_str[0] == "ls") {
-        args_str.push_back("-G"); 
+        args_str.insert(args_str.begin() + 1, "-G"); 
     }
 
     std::vector<char*> args_c;
@@ -73,7 +70,6 @@ static bool executeCommand(const std::string& command) {
         int status;
         waitpid(pid, &status, 0);
     }
-
     return true;
 }
 
